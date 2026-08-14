@@ -2,14 +2,9 @@
 
 Specification version: **1.0**
 
-This document defines the portable filesystem format understood by dbsliceAI
+This document defines the portable data format understood by dbsliceAI
 and `dbslice-ai-connector`. A dataset is a directory containing configuration,
-an item list and optional per-item extract payloads. The dataset directory may
-be located anywhere; all paths stored in the dataset are relative to its root.
-
-Words such as **must** and **required** describe interoperable requirements.
-**Recommended** and **optional** fields improve presentation or analysis but
-are not required to load the dataset.
+an item list and optional per-item extract payloads.
 
 ## Directory structure
 
@@ -30,7 +25,10 @@ example-dataset/
 ```
 
 Extract files do not have to use this exact directory convention, but keeping
-each extract under `data/extracts/<extractId>/` is recommended.
+each extract under `data/extracts/<extractId>/` is recommended. Every entry
+(or row) in `items.json` contains an `itemId`. Each extract filename for that
+item must contain the exact `itemId` value, normally by using the `${itemId}`
+placeholder in its declared path.
 
 ## Configuration
 
@@ -77,13 +75,17 @@ fields:
 | Field | Shape | Meaning |
 |---|---|---|
 | `summary` | string | concise study description |
-| `primaryInputs` | array of strings | important item input properties |
-| `primaryOutputs` | array of strings | important item result properties |
-| `primaryExtracts` | array of strings | important extract identifiers |
+| `primaryInputs` | array of property-name strings | important input properties in the item metadata |
+| `primaryOutputs` | array of property-name strings | important output properties in the item metadata |
+| `primaryExtracts` | array of extract-ID strings | important `extractId` values from `extracts` |
 
-Names in the three arrays should refer to properties or extracts that actually
-exist. These fields guide presentation and analysis; they do not change how
-files are loaded.
+Every `primaryInputs` and `primaryOutputs` entry must exactly match a property
+name on the item objects in the metadata file named by `metaData.path`. Every
+`primaryExtracts` entry must exactly match an `extractId` in the top-level
+`extracts` array. These references are case-sensitive. dbsliceAI does not
+currently verify that the references exist, so dataset authors must keep them
+consistent. These fields guide presentation and analysis; they do not change
+how files are loaded.
 
 ### Item-list declaration
 
@@ -156,7 +158,7 @@ root are not portable and are rejected by the readers. A referenced path must
 name a regular file. Payload files are loaded only when requested.
 
 Each decoded image, line, GLB or stored embedding payload must be no larger
-than 16 MiB (16,777,216 bytes). JSON payloads must be UTF-8 encoded.
+than 16 MB. JSON payloads must be UTF-8 encoded.
 
 ## Image extracts
 
