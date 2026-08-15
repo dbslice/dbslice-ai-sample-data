@@ -42,7 +42,7 @@ Register the extracted dataset with the public connector:
 
 ```bash
 dbslice-ai-connector run \
-  --dataset "axial-compressor-sample=Axial compressor sample=/absolute/path/to/dbslice-ai-sample-data-1.0.0"
+  --dataset /absolute/path/to/dbslice-ai-sample-data-1.0.0
 ```
 
 ## Release contents

@@ -327,14 +327,13 @@ stored connector payload. dbsliceAI derives it from the associated line data.
 
 ## Connector registration
 
-Run the connector with one or more dataset definitions:
+Run the connector with the dataset root:
 
 ```bash
 dbslice-ai-connector run \
-  --dataset "example=Example study=/absolute/path/to/example-dataset"
+  --dataset /absolute/path/to/example-dataset
 ```
 
-The connector-local alias is the first value. It may contain letters, numbers,
-dots, underscores and hyphens, must start with a letter or number and must be
-unique within that connector process. Connector-local filesystem paths stay
-private and are never returned in client-facing dataset results.
+The connector reads the display name from `dataset.title` and derives the
+dataset ID from that title. Connector-local filesystem paths stay private and
+are never returned in client-facing dataset results.
