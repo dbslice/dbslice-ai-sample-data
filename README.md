@@ -7,19 +7,24 @@ GitHub Release assets and are not committed to ordinary Git history.
 
 ## Axial compressor sample
 
-Release `v1.0.0` contains 61 converged cases from an axial compressor stator
+Release `v1.1.0` contains 61 converged cases from an axial compressor stator
 study. Every case has scalar operating and performance properties plus:
 
 - a downstream loss-coefficient (`Yp`) PNG and 3x3 grid embedding;
 - a spanwise exit `Yp` line with a computed five-bin embedding; and
 - a GLB model of the stator blades and exit cut plane.
 
+It also contains a structured curated reference to James V. Taylor and Robert
+J. Miller's *Competing Three-Dimensional Mechanisms in Compressor Flows*. The
+sample links to the authoritative Cambridge repository record; it does not
+redistribute the all-rights-reserved paper.
+
 The selection fixes `nstat` at 100 and retains the available lean designs at
 alternate exit pressures from 120 kPa through 148 kPa. See
 [PROVENANCE.md](PROVENANCE.md) for the exact selection and transformations.
 
-Download `dbslice-ai-sample-data-1.0.0.zip` from the
-[`v1.0.0` release](https://github.com/dbslice/dbslice-ai-sample-data/releases/tag/v1.0.0),
+Download `dbslice-ai-sample-data-1.1.0.zip` from the
+[`v1.1.0` release](https://github.com/dbslice/dbslice-ai-sample-data/releases/tag/v1.1.0),
 then verify it using the release's `SHA256SUMS` file:
 
 ```bash
@@ -32,9 +37,9 @@ the `dbslice` GitHub organisation. The GitHub CLI can download all release
 assets for an authorised user:
 
 ```bash
-gh release download v1.0.0 \
+gh release download v1.1.0 \
   --repo dbslice/dbslice-ai-sample-data \
-  --pattern 'dbslice-ai-sample-data-1.0.0*' \
+  --pattern 'dbslice-ai-sample-data-1.1.0*' \
   --pattern 'SHA256SUMS'
 ```
 
@@ -42,7 +47,7 @@ Register the extracted dataset with the public connector:
 
 ```bash
 dbslice-ai-connector run \
-  --dataset /absolute/path/to/dbslice-ai-sample-data-1.0.0
+  --dataset /absolute/path/to/dbslice-ai-sample-data-1.1.0
 ```
 
 ## Release contents
@@ -50,9 +55,11 @@ dbslice-ai-connector run \
 The archive has one dataset root:
 
 ```text
-dbslice-ai-sample-data-1.0.0/
+dbslice-ai-sample-data-1.1.0/
 ├── config/
 │   └── config.json
+├── curated_references/
+│   └── papers.json
 └── data/
     ├── metadata/
     │   └── items.json

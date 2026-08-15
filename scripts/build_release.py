@@ -13,10 +13,11 @@ import zipfile
 from collections import Counter
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 
-VERSION = "1.0.0"
-FORMAT_VERSION = "1.0"
+VERSION = "1.1.0"
+FORMAT_VERSION = "1.1"
 ROOT_NAME = f"dbslice-ai-sample-data-{VERSION}"
 ARCHIVE_NAME = f"{ROOT_NAME}.zip"
 MANIFEST_NAME = f"{ROOT_NAME}-manifest.json"
@@ -32,7 +33,8 @@ EXPECTED_PRESSURE_COUNTS = {
     144000: 5,
     148000: 3,
 }
-ZIP_TIMESTAMP = (2026, 8, 14, 0, 0, 0)
+ZIP_TIMESTAMP = (2026, 8, 15, 0, 0, 0)
+CURATED_REFERENCES_PATH = "curated_references/papers.json"
 
 
 def read_json(path: Path) -> Any:
@@ -119,6 +121,9 @@ def release_config() -> dict[str, Any]:
                 "datasetFormatVersion": FORMAT_VERSION,
             },
         },
+        "curatedReferences": {
+            "path": CURATED_REFERENCES_PATH,
+        },
         "extracts": [
             {
                 "extractId": "Yp-downstream",
@@ -187,6 +192,26 @@ def release_config() -> dict[str, Any]:
     }
 
 
+def curated_references(repository_root: Path) -> list[dict[str, Any]]:
+    references = read_json(repository_root / CURATED_REFERENCES_PATH)
+    require(isinstance(references, list), "curated reference manifest must be an array")
+    require(len(references) == 1, f"expected one curated reference, found {len(references)}")
+    reference = references[0]
+    require(isinstance(reference, dict), "curated reference must be an object")
+    require(
+        reference.get("paperId") == "taylor_miller_2016_competing_3d_mechanisms",
+        "unexpected curated reference paperId",
+    )
+    require(isinstance(reference.get("title"), str) and reference["title"].strip(), "reference title is required")
+    parsed_url = urlparse(reference.get("url", ""))
+    require(parsed_url.scheme == "https" and parsed_url.netloc, "reference URL must use HTTPS")
+    require(isinstance(reference.get("summary"), str) and reference["summary"].strip(), "reference summary is required")
+    require(reference.get("contentType") == "text/html", "reference contentType must describe the repository page")
+    require("All rights reserved" in reference.get("rights", ""), "reference rights notice is required")
+    require("filename" not in reference and "path" not in reference, "the sample must not redistribute the paper")
+    return references
+
+
 def validate_line(path: Path) -> None:
     payload = read_json(path)
     points = payload if isinstance(payload, list) else payload.get("data") if isinstance(payload, dict) else None
@@ -251,9 +276,15 @@ def checked_copy(source: Path, target: Path, kind: str) -> None:
     shutil.copyfile(source, target)
 
 
-def populate_dataset(source_root: Path, dataset_root: Path, items: list[dict[str, Any]]) -> None:
+def populate_dataset(
+    source_root: Path,
+    dataset_root: Path,
+    items: list[dict[str, Any]],
+    references: list[dict[str, Any]],
+) -> None:
     write_json(dataset_root / "config" / "config.json", release_config())
     write_json(dataset_root / "data" / "metadata" / "items.json", {"items": items})
+    write_json(dataset_root / CURATED_REFERENCES_PATH, references)
     for item in items:
         item_id = item["itemId"]
         copies = (
@@ -303,7 +334,12 @@ def write_deterministic_zip(dataset_root: Path, archive_path: Path) -> None:
                 archive.writestr(info, handle.read(), compresslevel=9)
 
 
-def build_manifest(dataset_root: Path, archive_path: Path, items: list[dict[str, Any]]) -> dict[str, Any]:
+def build_manifest(
+    dataset_root: Path,
+    archive_path: Path,
+    items: list[dict[str, Any]],
+    references: list[dict[str, Any]],
+) -> dict[str, Any]:
     files = []
     payload_bytes = 0
     maximum_payload_bytes = 0
@@ -334,6 +370,7 @@ def build_manifest(dataset_root: Path, archive_path: Path, items: list[dict[str,
             "pexitItemCounts": {str(key): value for key, value in EXPECTED_PRESSURE_COUNTS.items()},
         },
         "extracts": ["Yp-downstream", "stator_exit_line_Yp", "stator_3d_surface"],
+        "curatedReferences": [reference["paperId"] for reference in references],
         "fileCount": len(files),
         "extractPayloadBytes": payload_bytes,
         "maximumPayloadBytes": maximum_payload_bytes,
@@ -364,11 +401,12 @@ def main() -> None:
         require(not path.exists(), f"output already exists: {path}")
 
     items = selected_items(source_root)
+    references = curated_references(repository_root)
     with tempfile.TemporaryDirectory(prefix="dbslice-sample-build-", dir=output_root) as temporary:
         dataset_root = Path(temporary) / ROOT_NAME
-        populate_dataset(source_root, dataset_root, items)
+        populate_dataset(source_root, dataset_root, items, references)
         write_deterministic_zip(dataset_root, archive_path)
-        manifest = build_manifest(dataset_root, archive_path, items)
+        manifest = build_manifest(dataset_root, archive_path, items, references)
         write_json(manifest_path, manifest)
 
     checksums_path.write_text(

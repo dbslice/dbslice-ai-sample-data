@@ -1,0 +1,51 @@
+[
+  {
+    "paperId": "taylor_miller_2016_competing_3d_mechanisms",
+    "title": "Competing Three-Dimensional Mechanisms in Compressor Flows",
+    "authors": [
+      "James V. Taylor",
+      "Robert J. Miller"
+    ],
+    "year": 2016,
+    "venue": "Journal of Turbomachinery, 139(2), 021009",
+    "doi": "10.1115/1.4034685",
+    "url": "https://www.repository.cam.ac.uk/items/edc8e900-f58d-4937-bdbf-3c719ea1e499",
+    "contentType": "text/html",
+    "rights": "All rights reserved. The paper is linked from its authoritative repository record and is not redistributed with this dataset.",
+    "summary": "Explains how the transverse pressure gradient produced by three-dimensional compressor-blade stacking governs separation mode, loss generation and design uncertainty.",
+    "summaryBrief": "Relates compound lean to competing corner- and trailing-edge-separation mechanisms, aerodynamic loss and compressor design risk.",
+    "summaryExtended": "The paper treats the transverse pressure gradient as a central control on three-dimensional compressor stator behaviour. Increasing three-dimensional stacking strengthens this gradient and can move the limiting flow mechanism from abrupt open corner separation toward more progressive trailing-edge separation. The same change can increase design-point loss through additional downstream wake mixing. Maps of lean and pitch-to-chord ratio expose a trade-off between minimum loss, operating range and confidence in CFD predictions, making the paper directly relevant to interpreting the compound-lean trends in this sample dataset.",
+    "keyFindings": [
+      {
+        "title": "Transverse pressure gradient governs separation topology",
+        "detail": "Changing three-dimensional stacking changes the blade-surface transverse pressure gradient and therefore the dominant separation mechanism."
+      },
+      {
+        "title": "Stronger stacking changes the failure mode",
+        "detail": "Increasing the transverse pressure gradient can replace sudden open corner separation with progressive three-dimensional trailing-edge separation."
+      },
+      {
+        "title": "Design-point loss and range have different optima",
+        "detail": "The lowest design-point loss and the widest incidence range do not occur at the same amount of lean, creating a practical design trade-off."
+      },
+      {
+        "title": "Wake mixing explains the loss increase",
+        "detail": "The increase in total loss associated with a stronger transverse pressure gradient is attributed primarily to increased downstream wake mixing."
+      },
+      {
+        "title": "Low-stacking designs carry greater prediction risk",
+        "detail": "Open corner separations are sensitive to inlet-condition errors, so reduced stacking can make the predicted operating range substantially more uncertain."
+      }
+    ],
+    "citations": [
+      "Taylor, J. V. and Miller, R. J. Competing Three-Dimensional Mechanisms in Compressor Flows. Journal of Turbomachinery 139(2), 021009. https://doi.org/10.1115/1.4034685"
+    ],
+    "tags": [
+      "axial compressor",
+      "compound lean",
+      "transverse pressure gradient",
+      "corner separation",
+      "aerodynamic loss"
+    ]
+  }
+]

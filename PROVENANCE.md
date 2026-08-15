@@ -2,7 +2,7 @@
 
 ## Source study
 
-The `v1.0.0` sample is derived from the axial compressor stator study stored as
+The `v1.1.0` sample is derived from the axial compressor stator study stored as
 `data-repo/test-data-comp` in the private development history of `dbslice-ai`.
 The study and the derived sample are copyright Graham Pullan.
 
@@ -67,3 +67,18 @@ reprocessing step:
 The versioned release manifest records the SHA-256 digest and byte length of
 every file inside the archive. The release `SHA256SUMS` file separately records
 the digests of the archive and manifest.
+
+## Curated reference
+
+Release `v1.1.0` adds one URL-only curated reference:
+
+- James V. Taylor and Robert J. Miller, *Competing Three-Dimensional
+  Mechanisms in Compressor Flows*, Journal of Turbomachinery 139(2), 021009,
+  DOI `10.1115/1.4034685`.
+
+The metadata and original structured summary are stored in
+`curated_references/papers.json`. The URL points to the authoritative
+University of Cambridge repository record. That record identifies the accepted
+manuscript as all rights reserved, so the paper itself is not copied into this
+repository or the release archive. The repository's CC BY 4.0 licence applies
+to the sample's metadata and summary, not to the externally linked paper.

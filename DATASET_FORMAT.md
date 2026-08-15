@@ -1,6 +1,6 @@
 # dbsliceAI dataset format
 
-Specification version: **1.0**
+Specification version: **1.1**
 
 This document defines the portable data format understood by dbsliceAI
 and `dbslice-ai-connector`. A dataset is a directory containing configuration,
@@ -8,13 +8,15 @@ an item list and optional per-item extract payloads.
 
 ## Directory structure
 
-`config/config.json` is required at the dataset root. A conventional minimal
-layout is:
+`config/config.json` is required at the dataset root. A conventional layout,
+including the optional curated-reference manifest, is:
 
 ```text
 example-dataset/
 ├── config/
 │   └── config.json
+├── curated_references/
+│   └── papers.json
 └── data/
     ├── metadata/
     │   └── items.json
@@ -39,6 +41,7 @@ placeholder in its declared path.
 | `dataset` | required object | dataset-level description and context |
 | `metaData` | required object | item-list location and descriptive metadata |
 | `extracts` | required array | zero or more extract declarations |
+| `curatedReferences` | optional object | location of a linked curated-reference manifest |
 
 A minimal configuration is:
 
@@ -86,6 +89,34 @@ name on the item objects in the metadata file named by `metaData.path`. Every
 currently verify that the references exist, so dataset authors must keep them
 consistent. These fields guide presentation and analysis; they do not change
 how files are loaded.
+
+### Curated references
+
+A dataset may declare literature selected to help interpret its results:
+
+```json
+{
+  "curatedReferences": {
+    "path": "curated_references/papers.json"
+  }
+}
+```
+
+The path follows the same containment rules as other dataset paths and names a
+UTF-8 JSON file containing an array. Every entry requires non-empty `paperId`,
+`title` and `url` strings. `paperId` values must be unique within the manifest,
+and `url` must use HTTP or HTTPS. An entry may also contain `authors`, `year`,
+`venue`, `doi`, `contentType`, `rights`, `summary`, `summaryBrief`,
+`summaryExtended`, `keyFindings`, `figures`, `citations`, `tags` and
+`summaryData`.
+
+The connector loads the manifest and exposes its citation, summary and web-link
+metadata as `dataset.curatedReferences`; it never exposes
+`curatedReferences.path`. This portable declaration does not transfer local
+documents through the connector. References link to an authoritative repository
+or publisher page instead of including a local copy of a paper. Dataset authors
+are responsible for respecting the linked work's licence and must not assume
+that public download access grants redistribution rights.
 
 ### Item-list declaration
 
