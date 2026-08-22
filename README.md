@@ -1,5 +1,9 @@
 # dbsliceAI sample data
 
+This repository contains the public sample dataset and dataset specification
+for [dbsliceAI](https://ai.dbslice.org/), an MCP-based system for controlled,
+AI-assisted analysis of engineering simulation databases.
+
 This repository is the canonical home of the
 [dbsliceAI dataset format](DATASET_FORMAT.md) and the release metadata for
 compact, user-facing sample datasets. Large binary datasets are published as
@@ -29,12 +33,14 @@ then verify it using the release's `SHA256SUMS` file:
 
 ```bash
 shasum -a 256 -c SHA256SUMS
-unzip dbslice-ai-sample-data-1.0.0.zip
+unzip dbslice-ai-sample-data-1.1.0.zip
 ```
 
-While the repository is private, downloading the release requires access to
-the `dbslice` GitHub organisation. The GitHub CLI can download all release
-assets for an authorised user:
+The sample dataset is publicly available from the
+[GitHub Releases page](https://github.com/dbslice/dbslice-ai-sample-data/releases).
+No dbslice organisation membership is required.
+
+Alternatively, the GitHub CLI can download all release assets:
 
 ```bash
 gh release download v1.1.0 \
@@ -69,7 +75,7 @@ dbslice-ai-sample-data-1.1.0/
         └── stator_3d_surface/
 ```
 
-The versioned manifest in [`releases/v1.0.0`](releases/v1.0.0) records every
+The versioned manifest in [`releases/v1.1.0`](releases/v1.1.0) records every
 archive file, its size and its SHA-256 digest. `SHA256SUMS` covers both the ZIP
 and the manifest. The reproducible build and validation flow is implemented by
 [`scripts/build_release.py`](scripts/build_release.py); its output directory
