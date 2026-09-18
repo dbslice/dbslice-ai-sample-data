@@ -161,9 +161,11 @@ Every entry in `extracts` must be an object containing non-empty string values
 for:
 
 - `extractId`, unique within the dataset;
-- `type`, exactly `image`, `line` or `glb`;
+- `type`, exactly `image`, `line`, `glb` or `embedding`;
 - `description`; and
-- `path`, a dataset-relative payload path or path template.
+- `path`, a dataset-relative payload path or path template for visual extracts.
+  An `embedding` extract instead requires an `embedding` declaration with a
+  stored-data path and configured shape; no top-level visual path is needed.
 
 The optional common fields are:
 
@@ -173,7 +175,7 @@ The optional common fields are:
 | `xLabel`, `yLabel` | axis labels for line presentation |
 | `filter` | descriptive filter object with a non-empty `type` and optional `settings` object |
 | `render` | GLB rendering defaults |
-| `embedding` | optional stored or computed embedding declaration |
+| `embedding` | required stored declaration for `type: "embedding"`; optional stored or computed declaration for other extract types |
 
 The legacy fields `images`, `line`, `imageId`, `embedId` and
 `embedding.embedId` are not supported.
@@ -279,6 +281,33 @@ are exactly `file` and `computed`.
 New datasets should explicitly provide `source`. Readers also recognise an
 existing file-backed declaration with `path` and no `source` as `file`.
 
+### Standalone embedding extracts
+
+An embedding can be an extract in its own right, without an image, line, or GLB:
+
+```json
+{
+  "extractId": "Yp-3d",
+  "type": "embedding",
+  "description": "Logical stack of Yp hub, mid-span, and tip slice cells",
+  "embedding": {
+    "type": "cells",
+    "source": "file",
+    "path": "data/extracts/Yp-3d/${itemId}_cells_embed.json",
+    "settings": { "shape": [2, 5, 3] }
+  }
+}
+```
+
+The extract type describes its role; `embedding.type` describes the numeric
+representation. Standalone extracts currently require stored embeddings and
+`settings.shape`. They use the same analysis selectors and access operations
+as embeddings attached to visual extracts. `render_extracts` displays 1D bars,
+2D heatmaps, or 3D translucent blocks. The blocks touch, forming a continuous
+array. Axis-aligned slices are optional; requesting both views produces
+separate PNGs. Higher ranks support numerical analysis; spatial display needs
+explicit slicing.
+
 ### Stored embeddings
 
 A file-backed embedding requires `source: "file"` and a non-empty
@@ -315,15 +344,31 @@ The stored JSON payload must be an object with `shape` and `cells` arrays:
 }
 ```
 
-Each cell must be an object with an `index` array whose length matches the
-payload shape dimensionality and an `avg` value. Numeric `avg` values are
-required for numeric analysis. A cell may include `label` and other descriptive
-JSON properties.
+Shapes contain one or more positive integers, with at most 100,000 total cells.
+Each payload contains every declared cell exactly once, in lexicographic order
+with the last index varying fastest. Indices are integers within shape bounds.
+For `[ni, nj, nk]`, the array offset is `(i * nj + j) * nk + k`.
+All items for an extract use the same shape and cell correspondence. Configured
+`settings.shape`, when present, must match the payload. The producer supplies
+the cell values; dbsliceAI does not infer physical coordinates or interpolate
+these stored embeddings.
 
-A `grid` embedding additionally requires `embedding.settings.shape`; its
-payload shape must have exactly two dimensions and should match the declared
-shape. Shape entries and cell indices should be non-negative integers within
-the declared bounds.
+`avg` must be a finite number or `null`. Keep an empty cell in its ordinal slot
+with `avg: null`; zero is a real measurement. Labels, region names, and other
+numeric fields such as `min`/`max` may accompany each cell. Invalid payloads
+fail analysis; absent files can be omitted from analysis with per-cell sample
+counts reflecting the available values.
+
+`cells` supports arbitrary dimensionality. `grid` retains its two-dimensional
+contract and requires `settings.shape`. The 3D renderer accepts up to 4096
+cells and offers `blocks` (default), `slices`, and `both` views with uniform opacity,
+camera direction, and a bounded number of slices. `sliceAxis` holds `i` (0),
+`j` (1), or `k` (2, default) constant; the remaining axes retain their order as
+rows and columns. `maxSlices` defaults to 6 (range 1–12). If capped, slices are
+evenly spaced including both endpoints; a limit of 1 selects index 0. The PNG
+and rendering metadata report the axis, selected indices and omitted count.
+These display options do not alter numerical results. Connector installations must include the protocol
+schema that recognizes the `embedding` extract type.
 
 ### Computed line-bin embeddings
 
