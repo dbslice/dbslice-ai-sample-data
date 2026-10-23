@@ -302,11 +302,11 @@ An embedding can be an extract in its own right, without an image, line, or GLB:
 The extract type describes its role; `embedding.type` describes the numeric
 representation. Standalone extracts currently require stored embeddings and
 `settings.shape`. They use the same analysis selectors and access operations
-as embeddings attached to visual extracts. `render_extracts` displays 1D bars,
-2D heatmaps, or 3D translucent blocks. The blocks touch, forming a continuous
+as embeddings attached to visual extracts. `render_extracts` uses configured physical geometry when present, independently
+of array rank. Without geometry it displays 1D bars, 2D heatmaps, or 3D translucent blocks. The blocks touch, forming a continuous
 array. Axis-aligned slices are optional; requesting both views produces
-separate PNGs. Higher ranks support numerical analysis; spatial display needs
-explicit slicing.
+separate PNGs. Higher ranks support numerical analysis and configured physical geometry;
+logical display requires explicit slicing.
 
 ### Stored embeddings
 
@@ -346,7 +346,12 @@ The stored JSON payload must be an object with `shape` and `cells` arrays:
 
 Shapes contain one or more positive integers, with at most 100,000 total cells.
 Each payload contains every declared cell exactly once, in lexicographic order
-with the last index varying fastest. Indices are integers within shape bounds.
+with the last index varying fastest. Indices are integers within shape bounds. For a one-dimensional `cells` shape,
+`index` may be omitted: position `n` means `[n]`. Mixed explicit/implicit entries
+are allowed, but explicit indices must still match their canonical position.
+An explicit `null`, wrong-rank or out-of-range index is invalid. Higher ranks
+require explicit indices. Readers expand the 1D shorthand once at the data boundary;
+internal and returned cell records use explicit `index` tuples.
 For `[ni, nj, nk]`, the array offset is `(i * nj + j) * nk + k`.
 All items for an extract use the same shape and cell correspondence. Configured
 `settings.shape`, when present, must match the payload. The producer supplies
@@ -369,6 +374,91 @@ evenly spaced including both endpoints; a limit of 1 selects index 0. The PNG
 and rendering metadata report the axis, selected indices and omitted count.
 These display options do not alter numerical results. Connector installations must include the protocol
 schema that recognizes the `embedding` extract type.
+
+### Shared physical cell geometry and names
+
+Physical geometry belongs to `embedding.settings` in the extract config, shared
+by all items. It is optional. Numerical files continue to contain only `shape`,
+`cells`, and their values/optional existing labels. Geometry does not change cell
+correspondence, analysis, regression or ranking. Item responses do not repeat
+vertices or boundary connectivity; renderers receive them explicitly from config.
+
+`settings.regions` maps logical cells to optional `name` and boundary references.
+There is no `geometry.cells` list. Names are optional with or without geometry:
+display names resolve from a nonblank cell `label`, then cell `region`, then
+config region `name`, then `Cell(i,j,...)`. Existing payload names remain valid.
+Without geometry, `regions` can be omitted or sparse. With geometry, it must map
+every slot exactly once. Explicit region indices may be reordered. For shape
+`[N]`, an omitted region index means its array position `[n]`; mixed entries must
+still resolve to distinct, in-range indices. Higher ranks require indices.
+
+The same four physical cells can use a `[2,2]` or `[4]` numerical layout:
+
+```json
+{
+  "shape": [2, 2],
+  "geometry": {
+    "type": "polygons",
+    "units": "mm",
+    "vertices": [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1],[0,2],[1,2],[2,2]]
+  },
+  "regions": [
+    {"index":[0,0], "name":"inlet", "boundaryVertexIndices":[0,1,4,3]},
+    {"index":[0,1], "boundaryVertexIndices":[1,2,5,4]},
+    {"index":[1,0], "boundaryVertexIndices":[3,4,7,6]},
+    {"index":[1,1], "boundaryVertexIndices":[4,5,8,7]}
+  ]
+}
+```
+
+For the flat version, retain `geometry`, use `shape: [4]`, and omit the four
+region indices (or use `[0]` through `[3]`). Its numerical payload can be:
+
+```json
+{"shape":[4], "cells":[{"avg":0.12},{"avg":0.18},{"avg":null},{"avg":0.21}]}
+```
+
+`geometry.type` selects physical dimensionality independently of logical shape:
+
+- `polygons`: each vertex is `[x,y]`. Each region has `boundaryVertexIndices`,
+  an ordered simple polygon boundary of at least three vertices. Do not repeat
+  the first vertex at the end. Either winding is accepted; holes, crossings,
+  zero-area boundaries and disconnected patches are unsupported.
+- `polyhedra`: each vertex is `[x,y,z]`. Each region has `triangleVertexIndices`,
+  an array of three-index triangles forming one closed, outward-wound shell.
+  Every edge belongs to two oppositely oriented triangles; every vertex has a
+  connected face fan. Duplicate/degenerate triangles and nonpositive signed
+  volume are rejected. Open surface patches and multiple shells are unsupported.
+
+Coordinates must be finite and share one Cartesian frame; optional `units` is a
+nonblank display label applying to all coordinates. No unit conversion occurs.
+Vertex references are zero-based integer positions in `geometry.vertices`.
+Validation uses coordinates normalized by each region's longest extent, with a
+relative tolerance of `1e-12`; degenerate or unrepresentable extents are invalid.
+Shell checks do not certify that distant triangles or different cells do not
+intersect; producers remain responsible for geometrically valid disjoint cells.
+
+Limits are 100,000 vertices and 600,000 vertex references per geometry, 512
+vertices per polygon, and 4096 triangles per polyhedron. Physical rendering is
+limited to 4096 cells. Invalid supplied geometry raises an error, including when
+logical rendering is requested; it never silently falls back to guessed geometry.
+
+Rendering options are shared by raw embedding extracts, correlation maps and
+regression coefficient maps. `coordinateSpace` defaults to `auto` (physical when
+configured); `logical` uses array coordinates; `physical` requires geometry.
+`view: "blocks"` is the default physical overview (polygons or volumes).
+`slices` and `both` require rank three and select **logical** array planes, even
+when geometry exists; physical plane cuts/caps are not implemented. 3D
+`creaseAngle` is in degrees (default 1, range 0–180); coplanar triangulation
+diagonals are hidden while boundaries are outlined separately for each cell.
+`opacity` and `cameraDirection` apply to 3D overviews. Missing physical cells
+remain visible as grey polygons or unfilled volume outlines. Plot provenance
+retains exact geometry, names, mapping, units and effective render options.
+
+Connector protocol v1 now permits omitted 1D indices. Existing explicit-index
+payloads remain compatible; update both connector and host to this schema before
+using the shorthand. Older protocol-v1 installations may reject it. Inline
+geometry travels through the existing config operation without new endpoints.
 
 ### Computed line-bin embeddings
 
